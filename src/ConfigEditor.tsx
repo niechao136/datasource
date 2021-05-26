@@ -1,9 +1,9 @@
 import React, { ChangeEvent, PureComponent } from 'react';
-import { LegacyForms } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData } from './types';
+import { LegacyForms, InlineLabel } from '@grafana/ui';
+import {DataSourcePluginOptionsEditorProps} from '@grafana/data';
+import { MyDataSourceOptions, MySecureJsonData, APIType } from './types';
 
-const { SecretFormField, FormField } = LegacyForms;
+const { SecretFormField, FormField, Select } = LegacyForms;
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
@@ -15,6 +15,24 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const jsonData = {
       ...options.jsonData,
       path: event.target.value,
+    };
+    onOptionsChange({ ...options, jsonData });
+  };
+
+  onAccessKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = this.props;
+    const jsonData = {
+      ...options.jsonData,
+      accessKey: event.target.value,
+    };
+    onOptionsChange({ ...options, jsonData });
+  };
+
+  onTypeChange = (newVal: any) => {
+    const { onOptionsChange, options } = this.props;
+    const jsonData = {
+      ...options.jsonData,
+      type: newVal,
     };
     onOptionsChange({ ...options, jsonData });
   };
@@ -49,6 +67,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { options } = this.props;
     const { jsonData, secureJsonFields } = options;
     const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+    const types = [
+      {
+        value: 'widget' as APIType,
+        label: 'Widget',
+      },
+      {
+        value: 'pos' as APIType,
+        label: 'Pos',
+      },
+    ];
 
     return (
       <div className="gf-form-group">
@@ -61,6 +89,28 @@ export class ConfigEditor extends PureComponent<Props, State> {
             value={jsonData.path || ''}
             placeholder="json field returned to frontend"
           />
+        </div>
+
+        <div className="gf-form">
+          <FormField
+            label="AccessKey"
+            labelWidth={6}
+            inputWidth={20}
+            onChange={this.onAccessKeyChange}
+            value={jsonData.accessKey || ''}
+            placeholder="Enter a number"
+          />
+        </div>
+
+        <div className="gf-form">
+          <InlineLabel width={6}>
+            Type
+            <Select
+              width={20}
+              options={types}
+              onChange={this.onTypeChange}/>
+          </InlineLabel>
+
         </div>
 
         <div className="gf-form-inline">
