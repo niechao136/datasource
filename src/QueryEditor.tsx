@@ -32,6 +32,7 @@ export class QueryEditor extends PureComponent<Props> {
   render() {
     const query = defaults(this.props.query, defaultQuery);
     const { queryText, constant, frequency } = query;
+    console.log(this.props);
 
     return (
       <div className="gf-form">

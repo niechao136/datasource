@@ -1,20 +1,29 @@
 import React, { ChangeEvent, PureComponent } from 'react';
-import { LegacyForms, InlineLabel } from '@grafana/ui';
-import {DataSourcePluginOptionsEditorProps} from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData, APIType } from './types';
+import { LegacyForms } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { MyDataSourceOptions, MySecureJsonData } from './types';
 
-const { SecretFormField, FormField, Select } = LegacyForms;
+const { SecretFormField, FormField } = LegacyForms;
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
 interface State {}
 
 export class ConfigEditor extends PureComponent<Props, State> {
-  onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onWidgetChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props;
     const jsonData = {
       ...options.jsonData,
-      path: event.target.value,
+      widget: event.target.value,
+    };
+    onOptionsChange({ ...options, jsonData });
+  };
+
+  onPosChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = this.props;
+    const jsonData = {
+      ...options.jsonData,
+      pos: event.target.value,
     };
     onOptionsChange({ ...options, jsonData });
   };
@@ -24,15 +33,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const jsonData = {
       ...options.jsonData,
       accessKey: event.target.value,
-    };
-    onOptionsChange({ ...options, jsonData });
-  };
-
-  onTypeChange = (newVal: any) => {
-    const { onOptionsChange, options } = this.props;
-    const jsonData = {
-      ...options.jsonData,
-      type: newVal,
     };
     onOptionsChange({ ...options, jsonData });
   };
@@ -67,27 +67,28 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { options } = this.props;
     const { jsonData, secureJsonFields } = options;
     const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
-    const types = [
-      {
-        value: 'widget' as APIType,
-        label: 'Widget',
-      },
-      {
-        value: 'pos' as APIType,
-        label: 'Pos',
-      },
-    ];
 
     return (
       <div className="gf-form-group">
         <div className="gf-form">
           <FormField
-            label="Path"
+            label="API"
             labelWidth={6}
             inputWidth={20}
-            onChange={this.onPathChange}
-            value={jsonData.path || ''}
-            placeholder="json field returned to frontend"
+            onChange={this.onWidgetChange}
+            value={jsonData.widget || ''}
+            placeholder="Enter the API path"
+          />
+        </div>
+
+        <div className="gf-form">
+          <FormField
+            label="POS"
+            labelWidth={6}
+            inputWidth={20}
+            onChange={this.onPosChange}
+            value={jsonData.pos || ''}
+            placeholder="Enter the POS path"
           />
         </div>
 
@@ -98,19 +99,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
             inputWidth={20}
             onChange={this.onAccessKeyChange}
             value={jsonData.accessKey || ''}
-            placeholder="Enter a number"
+            placeholder="Enter the accessKey"
           />
-        </div>
-
-        <div className="gf-form">
-          <InlineLabel width={6}>
-            Type
-            <Select
-              width={20}
-              options={types}
-              onChange={this.onTypeChange}/>
-          </InlineLabel>
-
         </div>
 
         <div className="gf-form-inline">

@@ -1,26 +1,34 @@
 import defaults from 'lodash/defaults';
+import axios from 'axios';
+import qs from 'qs';
+
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
 
 import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-  MutableDataFrame,
   FieldType,
+  MutableDataFrame,
 } from '@grafana/data';
 
-import { MyQuery, MyDataSourceOptions, defaultQuery } from './types';
+import {defaultQuery, MyDataSourceOptions, MyQuery, Store} from './types';
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   accessKey: string;
-  path: string;
+  widget: string;
+  pos: string;
+  stores: Array<Store>;
 
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
 
     console.log(instanceSettings);
     this.accessKey = instanceSettings.jsonData.accessKey || "";
-    this.path = instanceSettings.jsonData.path || "";
+    this.widget = instanceSettings.jsonData.widget || "";
+    this.pos = instanceSettings.jsonData.pos || "";
+    this.stores = instanceSettings.jsonData.stores || [];
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
@@ -52,9 +60,62 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
   async testDatasource() {
     // Implement a health check for your data source.
-    return {
-      status: 'success',
-      message: 'Success',
-    };
+    return this.widgetRequest("/api/store/list", {
+      access_key: this.accessKey
+    }).then(res => {
+      if (res.data.status == 1) {
+        res.data.stores.forEach((value: any) => this.stores.push(value));
+        if (this.stores.length == 0) {
+          return {
+            status: 'error',
+            message: 'No Store',
+          };
+        }
+        else {
+          return this.posRequest("/api/pos/isposdata", {
+            "account_id": this.stores[0].acc_id,
+            "rk": this.stores[0].register_key,
+            "access_key": this.accessKey
+          }).then(data => {
+            if (data.data.status && data.data.status == 1) {
+              return {
+                status: 'success',
+                message: 'Success',
+              };
+            }
+            else {
+              return {
+                status: 'error',
+                message: data.data.msg,
+              };
+            }
+          }).catch(() => {
+            return {
+              status: 'error',
+              message: 'Network Error',
+            };
+          })
+        }
+      }
+      else {
+        return {
+          status: 'error',
+          message: res.data.error_message,
+        };
+      }
+    }).catch(() => {
+      return {
+        status: 'error',
+        message: 'Network Error',
+      };
+    });
+  }
+
+  async widgetRequest(url: string, data: any) {
+    return await axios.post(this.widget + url, JSON.stringify(data));
+  }
+
+  async posRequest(url: string, data: any) {
+    return await axios.post(this.pos + url, qs.stringify(data));
   }
 }

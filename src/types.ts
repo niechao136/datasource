@@ -1,5 +1,4 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
-export type APIType = 'pos' | 'widget';
 
 export interface MyQuery extends DataQuery {
   queryText?: string;
@@ -12,13 +11,20 @@ export const defaultQuery: Partial<MyQuery> = {
   frequency: 1.0,
 };
 
+export interface Store {
+  acc_id: string;
+  store_id: string;
+  register_key: string;
+}
+
 /**
  * These are options configured for each DataSource instance
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
-  path?: string;
+  widget?: string;
+  pos?: string;
   accessKey?: string;
-  type: APIType;
+  stores: Array<Store>;
 }
 
 /**
