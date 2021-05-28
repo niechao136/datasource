@@ -15,11 +15,14 @@ import {
 
 import {defaultQuery, MyDataSourceOptions, MyQuery, Store} from './types';
 
+import { ConfigEditor } from "./ConfigEditor";
+
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   accessKey: string;
   widget: string;
   pos: string;
   stores: Array<Store>;
+  instanceSettings: DataSourceInstanceSettings;
 
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
@@ -29,6 +32,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     this.widget = instanceSettings.jsonData.widget || "";
     this.pos = instanceSettings.jsonData.pos || "";
     this.stores = instanceSettings.jsonData.stores || [];
+    this.instanceSettings = instanceSettings;
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
@@ -64,8 +68,16 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       access_key: this.accessKey
     }).then(res => {
       if (res.data.status == 1) {
-        res.data.stores.forEach((value: any) => this.stores.push(value));
-        if (this.stores.length == 0) {
+        console.log(ConfigEditor);
+        ConfigEditor.onStoreChange(res.data.stores);
+        const jsonData = {
+          ...this.instanceSettings.jsonData,
+          stores: res.data.stores,
+        };
+        //updateDatasourcePluginOption(this.instanceSettings as any, 'jsonData', {...this.instanceSettings, jsonData});
+        //res.data.stores.forEach((value: any) => this.stores.push(value));
+        this.instanceSettings.jsonData = jsonData;
+        if (res.data.stores.length == 0) {
           return {
             status: 'error',
             message: 'No Store',
@@ -73,8 +85,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         }
         else {
           return this.posRequest("/api/pos/isposdata", {
-            "account_id": this.stores[0].acc_id,
-            "rk": this.stores[0].register_key,
+            "account_id": res.data.stores[0].acc_id,
+            "rk": res.data.stores[0].register_key,
             "access_key": this.accessKey
           }).then(data => {
             if (data.data.status && data.data.status == 1) {
@@ -103,7 +115,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           message: res.data.error_message,
         };
       }
-    }).catch(() => {
+    }).catch((err) => {
+      console.log(err)
       return {
         status: 'error',
         message: 'Network Error',

@@ -1,63 +1,44 @@
 import defaults from 'lodash/defaults';
 
-import React, { ChangeEvent, PureComponent } from 'react';
-import { LegacyForms } from '@grafana/ui';
+import React, { PureComponent } from 'react';
+import { LegacyForms, InlineFormLabel, getTheme } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from './datasource';
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
 
-const { FormField } = LegacyForms;
+const { Select } = LegacyForms;
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export class QueryEditor extends PureComponent<Props> {
-  onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onChange, query } = this.props;
-    onChange({ ...query, queryText: event.target.value });
-  };
-
-  onConstantChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onStoreChange = (newVal: any) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, constant: parseFloat(event.target.value) });
-    // executes the query
+    onChange({ ...query, store_ids: newVal });
     onRunQuery();
-  };
-  onFrequencyChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, frequency: parseFloat(event.target.value) });
-    // executes the query
-    onRunQuery();
-  };
-
+  }
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const { queryText, constant, frequency } = query;
-    console.log(this.props);
+    const { store_ids } = query;
+    const stores: any = [];
+    this.props.datasource.stores.forEach(store => {
+      stores.push({
+        value: store.store_id,
+        label: store.store_name,
+      });
+    });
+    console.log(getTheme());
 
     return (
       <div className="gf-form">
-        <FormField
-          width={4}
-          value={constant}
-          onChange={this.onConstantChange}
-          label="Constant"
-          type="number"
-          step="0.1"
-        />
-        <FormField
-          labelWidth={8}
-          value={queryText || ''}
-          onChange={this.onQueryTextChange}
-          label="Query Text"
-          tooltip="Not used yet"
-        />
-        <FormField
-          width={4}
-          value={frequency}
-          onChange={this.onFrequencyChange}
-          label="Frequency"
-          type="number"
-        />
+        <InlineFormLabel width={4}>
+          Store
+        </InlineFormLabel>
+        <Select
+          options={stores}
+          width={8}
+          showAllSelectedWhenOpen={true}
+          value={store_ids}
+          onChange={this.onStoreChange}/>
       </div>
     );
   }

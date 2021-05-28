@@ -10,6 +10,20 @@ interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> 
 interface State {}
 
 export class ConfigEditor extends PureComponent<Props, State> {
+
+  constructor(props: Props) {
+    super(props);
+    ConfigEditor.onStoreChange = this.onStoreChange.bind(this); // 最重要的一步！！
+  }
+  static onStoreChange(newVal: any) {
+    // @ts-ignore
+    const { onOptionsChange, options } = this.props;
+    const jsonData = {
+      ...options.jsonData,
+      stores: newVal,
+    };
+    onOptionsChange({ ...options, jsonData });
+  }
   onWidgetChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props;
     const jsonData = {
@@ -47,6 +61,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
       },
     });
   };
+
+  onStoreChange = (newVal: any) => {
+    const { onOptionsChange, options } = this.props;
+    const jsonData = {
+      ...options.jsonData,
+      stores: newVal,
+    };
+    onOptionsChange({ ...options, jsonData });
+  }
 
   onResetAPIKey = () => {
     const { onOptionsChange, options } = this.props;
